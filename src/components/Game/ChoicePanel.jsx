@@ -10,9 +10,30 @@ import { CONFIG } from '../../config.js';
 // Letras y colores neutros para las opciones (sin relación con los roles)
 const OPTION_LABELS = ['A', 'B', 'C'];
 const OPTION_NEUTRAL_COLORS = [
-  { bg: 'rgba(212,148,63,0.08)',  border: 'rgba(212,148,63,0.35)',  text: 'var(--color-cafe-300)' },
-  { bg: 'rgba(100,160,200,0.08)', border: 'rgba(100,160,200,0.35)', text: '#7ec8e3' },
-  { bg: 'rgba(150,200,140,0.08)', border: 'rgba(150,200,140,0.35)', text: '#a8d8a8' },
+  {
+    bg: 'rgba(26, 17, 10, 0.92)',
+    bgHover: 'rgba(45, 30, 15, 0.94)',
+    bgChosen: 'rgba(65, 38, 15, 0.95)',
+    border: 'rgba(255, 202, 40, 0.4)',
+    borderChosen: 'rgba(255, 202, 40, 0.9)',
+    text: 'var(--color-accent-amber)',
+  },
+  {
+    bg: 'rgba(15, 22, 32, 0.92)',
+    bgHover: 'rgba(25, 38, 54, 0.94)',
+    bgChosen: 'rgba(35, 55, 80, 0.95)',
+    border: 'rgba(79, 195, 247, 0.4)',
+    borderChosen: 'rgba(79, 195, 247, 0.9)',
+    text: 'var(--color-accent-blue)',
+  },
+  {
+    bg: 'rgba(16, 26, 18, 0.92)',
+    bgHover: 'rgba(28, 44, 32, 0.94)',
+    bgChosen: 'rgba(40, 65, 45, 0.95)',
+    border: 'rgba(105, 240, 174, 0.4)',
+    borderChosen: 'rgba(105, 240, 174, 0.9)',
+    text: 'var(--color-accent-green)',
+  },
 ];
 
 export default function ChoicePanel({ options, question, playerName, onChoice }) {
@@ -27,12 +48,12 @@ export default function ChoicePanel({ options, question, playerName, onChoice })
   return (
     <div className="space-y-3 animate-fade-in-up">
       {/* Prompt */}
-      <div className="text-center mb-2">
+      <div className="text-center mb-3">
         <p
-          className="font-narrative italic text-sm sm:text-base"
-          style={{ color: 'var(--color-cafe-300)' }}
+          className="font-narrative italic text-base sm:text-lg"
+          style={{ color: 'var(--color-cafe-100)' }}
         >
-          ¿Cuál es tu enfoque, <span style={{ color: 'var(--color-cafe-200)', fontWeight: 600 }}>{playerName}</span>?
+          ¿Cuál es tu enfoque, <span style={{ color: 'var(--color-accent-amber)', fontWeight: 700, fontStyle: 'normal' }}>{playerName}</span>?
         </p>
       </div>
 
@@ -55,10 +76,14 @@ export default function ChoicePanel({ options, question, playerName, onChoice })
               style={{
                 animation: `choice-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) ${index * 110}ms both`,
                 opacity: isDisabled && !isChosen ? 0.38 : 1,
-                borderColor: isChosen ? neutral.text : neutral.border,
-                background: isChosen ? neutral.bg.replace('0.08', '0.2') : neutral.bg,
                 transform: isChosen ? 'scale(1.01) translateX(4px)' : undefined,
                 transition: 'opacity 0.3s ease, border-color 0.25s, background 0.25s, transform 0.25s',
+                // Custom CSS variables for hover/active states
+                '--choice-border': isChosen ? neutral.borderChosen : neutral.border,
+                '--choice-bg': isChosen ? neutral.bgChosen : neutral.bg,
+                '--choice-bg-hover': isChosen ? neutral.bgChosen : neutral.bgHover,
+                '--choice-border-hover': neutral.borderChosen,
+                '--choice-text': neutral.text,
               }}
             >
               <div className="flex items-start gap-4">
@@ -66,10 +91,10 @@ export default function ChoicePanel({ options, question, playerName, onChoice })
                 <div
                   className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold mt-0.5"
                   style={{
-                    background: isChosen ? neutral.bg.replace('0.08', '0.25') : 'rgba(255,255,255,0.05)',
+                    background: isChosen ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
                     border: `1.5px solid ${isChosen ? neutral.text : neutral.border}`,
-                    color: isChosen ? neutral.text : 'var(--color-cafe-300)',
-                    boxShadow: isChosen ? `0 0 10px ${neutral.text}40` : 'none',
+                    color: isChosen ? '#ffffff' : neutral.text,
+                    boxShadow: isChosen ? `0 0 12px ${neutral.text}50` : 'none',
                     transition: 'all 0.25s ease',
                     fontFamily: 'var(--font-title)',
                   }}
@@ -94,9 +119,9 @@ export default function ChoicePanel({ options, question, playerName, onChoice })
                     </div>
                   )}
                   <p
-                    className="text-sm leading-relaxed"
+                    className="text-sm sm:text-base leading-relaxed"
                     style={{
-                      color: isChosen ? 'var(--color-cafe-100)' : 'rgba(245,230,200,0.75)',
+                      color: isChosen ? 'var(--color-cafe-50)' : 'var(--color-cafe-100)',
                       fontFamily: 'var(--font-narrative)',
                       lineHeight: '1.65',
                       transition: 'color 0.25s',
@@ -115,7 +140,7 @@ export default function ChoicePanel({ options, question, playerName, onChoice })
       {chosen === null && (
         <p
           className="text-center text-xs animate-fade-in mt-1"
-          style={{ color: 'rgba(245,230,200,0.25)' }}
+          style={{ color: 'rgba(245,230,200,0.5)' }}
         >
           Haz clic en la opción que mejor describe cómo actuarías
         </p>

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import NameForm from './NameForm.jsx';
 import AvatarSelector from './AvatarSelector.jsx';
+import Footer from '../Footer.jsx';
 
 import bgAnalisis from '../../assets/backgrounds/bg_analisis.png';
 
@@ -126,6 +127,8 @@ export default function Onboarding({ onStart }) {
               />
             ))}
           </div>
+
+          <Footer />
         </div>
       </div>
     </div>

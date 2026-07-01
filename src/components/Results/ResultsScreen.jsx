@@ -4,6 +4,7 @@
 import { ROLES } from '../../data/roles.js';
 import bgMantenimiento from '../../assets/backgrounds/bg_mantenimiento.png';
 import FeedbackForm from './FeedbackForm.jsx';
+import Footer from '../Footer.jsx';
 
 export default function ResultsScreen({ profile, player, earlyExit, choicesCount, onRestart }) {
   const { primary, secondary, allScores } = profile;
@@ -298,12 +299,7 @@ export default function ResultsScreen({ profile, player, earlyExit, choicesCount
               <span>↺</span>
               Volver a intentarlo
             </button>
-            <p
-              className="mt-4"
-              style={{ fontSize: '0.72rem', color: 'rgba(245,230,200,0.25)' }}
-            >
-              SysCoffee · Test Vocacional TI
-            </p>
+            <Footer />
           </div>
 
         </div>

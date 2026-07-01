@@ -216,13 +216,13 @@ body {
 
 /* ─── Choice Cards ───────────────────────────────────────────── */
 .choice-card {
-  background: rgba(15, 8, 2, 0.75);
-  border: 1.5px solid rgba(212, 148, 63, 0.35);
+  background: var(--choice-bg, rgba(15, 8, 2, 0.88));
+  border: 1.5px solid var(--choice-border, rgba(212, 148, 63, 0.35));
   border-radius: 10px;
   padding: 14px 20px;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
   position: relative;
   overflow: hidden;
 }
@@ -232,19 +232,19 @@ body {
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 3px;
-  background: linear-gradient(to bottom, var(--color-cafe-300), var(--color-cafe-500));
+  background: var(--choice-text, var(--color-cafe-300));
   opacity: 0;
   transition: opacity 0.2s;
   border-radius: 0 2px 2px 0;
 }
 
-.choice-card:hover {
-  border-color: var(--color-cafe-300);
-  background: rgba(74, 44, 18, 0.65);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 12px rgba(212,148,63,0.15);
+.choice-card:hover:not(:disabled) {
+  border-color: var(--choice-border-hover, var(--color-cafe-300));
+  background: var(--choice-bg-hover, rgba(74, 44, 18, 0.65));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(212, 148, 63, 0.2);
 }
 
-.choice-card:hover::before { opacity: 1; }
+.choice-card:hover:not(:disabled)::before { opacity: 1; }
 
 /* ─── Glassmorphism Cards ────────────────────────────────────── */
 .glass-card {
