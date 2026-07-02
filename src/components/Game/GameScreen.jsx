@@ -16,7 +16,7 @@ export default function GameScreen({
   if (!currentQuestion) return null;
 
   const { player, algorithm, showChoices, currentOptions } = state;
-  const phase = currentQuestion.phase;
+  const phase = currentQuestion.background;
 
   return (
     <div className="vn-container">

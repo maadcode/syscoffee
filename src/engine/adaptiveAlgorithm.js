@@ -1,17 +1,20 @@
 // ─── adaptiveAlgorithm.js ────────────────────────────────────────────────────
 // Motor adaptativo de selección de opciones para el test vocacional.
-// Implementa: persistencia de selección, selección aleatoria con límite
-// de apariciones, control del pool y salida temprana.
+// Implementa: persistencia de selección, selección aleatoria priorizada,
+// control de apariciones mínimas y salida temprana.
 
 import { ROLE_IDS } from '../data/roles.js';
 import { QUESTIONS } from '../data/questions.js';
+import { CONFIG } from '../config.js';
 
 // ── Constantes de configuración ──────────────────────────────────────────────
 export const TOTAL_ROLES = ROLE_IDS.length;                          // 11
-export const MAX_APPEARANCES = 5;                                    // máximo por rol
-export const EARLY_EXIT_THRESHOLD = 5;                               // consecutivas para salida
-export const OPTIONS_PER_QUESTION = 3;                               // opciones por pregunta (N)
-export const TOTAL_QUESTIONS = Math.ceil((TOTAL_ROLES - 1) / (OPTIONS_PER_QUESTION - 1)); // Cálculo dinámico exacto
+export const MIN_APPEARANCES_PER_ROLE = 3;                           // cada rol debe aparecer al menos 3 veces
+export const EARLY_EXIT_THRESHOLD = 5;                               // consecutivas para salida temprana
+export const OPTIONS_PER_QUESTION = CONFIG.OPTIONS_PER_QUESTION;     // configurable vía env
+export const TOTAL_QUESTIONS = Math.ceil(
+  (TOTAL_ROLES * MIN_APPEARANCES_PER_ROLE) / OPTIONS_PER_QUESTION
+);  // mínimo de preguntas estimado (~11 con 3 opciones)
 
 
 /**
@@ -40,52 +43,46 @@ export function initAlgorithmState() {
 
 /**
  * Genera las opciones de roles para la pregunta actual.
+ * Prioriza roles con menos apariciones para garantizar cobertura uniforme.
  * @param {object} state - Estado actual del algoritmo
  * @returns {string[]} Array de roleIds para mostrar como opciones
  */
 export function generateOptions(state) {
-  const { lastChosenRole, appearances, questionIndex, totalQuestions, optionsPerQuestion } = state;
-  const isLastQuestion = questionIndex === totalQuestions - 1;
-
-  // Roles elegibles: apariciones < MAX_APPEARANCES
-  const eligible = ROLE_IDS.filter((id) => appearances[id] < MAX_APPEARANCES);
+  const { lastChosenRole, appearances, optionsPerQuestion } = state;
 
   // Calcular cuántas opciones mostrar
-  let targetCount;
-  if (isLastQuestion) {
-    // En la última pregunta, mostramos los roles que nunca han aparecido más la persistencia
-    const unpresented = ROLE_IDS.filter((id) => appearances[id] === 0);
-    targetCount = unpresented.length;
-    if (lastChosenRole && eligible.includes(lastChosenRole)) {
-      targetCount += 1;
-    }
-    // Asegurarnos de que no exceda las opciones normales por pregunta
-    targetCount = Math.min(optionsPerQuestion, targetCount);
-  } else {
-    targetCount = Math.min(optionsPerQuestion, eligible.length);
-  }
+  const targetCount = Math.min(optionsPerQuestion, ROLE_IDS.length);
 
   const options = [];
 
-  // Opción 1: rol previamente elegido (persistencia), si existe y es elegible
-  if (lastChosenRole && eligible.includes(lastChosenRole)) {
+  // Opción 1: rol previamente elegido (persistencia), si existe
+  if (lastChosenRole) {
     options.push(lastChosenRole);
   }
 
-  // Priorizar roles que no han sido presentados aún (apariciones === 0)
-  const unpresentedPool = eligible.filter((id) => appearances[id] === 0 && !options.includes(id));
-  shuffleArray(unpresentedPool);
+  // Ordenar roles restantes por apariciones (menor primero) para priorizar
+  // los que necesitan más exposición
+  const remaining = ROLE_IDS
+    .filter((id) => !options.includes(id))
+    .map((id) => ({ id, count: appearances[id] }))
+    .sort((a, b) => a.count - b.count);
 
-  while (options.length < targetCount && unpresentedPool.length > 0) {
-    options.push(unpresentedPool.pop());
-  }
+  // Agrupar por cantidad de apariciones para hacer shuffle dentro de cada grupo
+  const groups = {};
+  remaining.forEach(({ id, count }) => {
+    if (!groups[count]) groups[count] = [];
+    groups[count].push(id);
+  });
 
-  // Si aún necesitamos más opciones, las tomamos del pool de presentados
-  if (options.length < targetCount) {
-    const presentedPool = eligible.filter((id) => appearances[id] > 0 && !options.includes(id));
-    shuffleArray(presentedPool);
-    while (options.length < targetCount && presentedPool.length > 0) {
-      options.push(presentedPool.pop());
+  // Agregar roles priorizados (menos apariciones primero) con shuffle dentro de grupo
+  const sortedCounts = Object.keys(groups).map(Number).sort((a, b) => a - b);
+  for (const count of sortedCounts) {
+    if (options.length >= targetCount) break;
+    const group = [...groups[count]];
+    shuffleArray(group);
+    for (const id of group) {
+      if (options.length >= targetCount) break;
+      options.push(id);
     }
   }
 
@@ -121,20 +118,37 @@ export function processChoice(state, roleId) {
   newState.lastChosenRole = roleId;
   newState.questionIndex = state.questionIndex + 1;
 
-  // Verificar salida temprana
+  // Verificar salida temprana (5 consecutivas del mismo rol)
   if (newState.consecutiveCount >= EARLY_EXIT_THRESHOLD) {
     newState.finished = true;
     newState.earlyExit = true;
     return newState;
   }
 
-  // Verificar fin de preguntas
-  if (newState.questionIndex >= state.totalQuestions) {
+  // Verificar si todos los roles han alcanzado el mínimo de apariciones
+  const allRolesCovered = ROLE_IDS.every(
+    (id) => newState.appearances[id] >= MIN_APPEARANCES_PER_ROLE
+  );
+
+  if (allRolesCovered) {
     newState.finished = true;
     newState.earlyExit = false;
   }
 
   return newState;
+}
+
+/**
+ * Calcula el progreso del juego basado en la cobertura de roles.
+ * @param {object} appearances - Mapa roleId → apariciones
+ * @returns {number} Progreso de 0 a 100
+ */
+export function calculateProgress(appearances) {
+  const totalNeeded = TOTAL_ROLES * MIN_APPEARANCES_PER_ROLE;
+  const totalAchieved = ROLE_IDS.reduce((sum, id) => {
+    return sum + Math.min(appearances[id], MIN_APPEARANCES_PER_ROLE);
+  }, 0);
+  return Math.min((totalAchieved / totalNeeded) * 100, 100);
 }
 
 /**
@@ -159,10 +173,11 @@ export function calculateProfile(scores) {
 
 /**
  * Devuelve la pregunta actual basada en el índice.
+ * Recicla preguntas con módulo si el índice excede el banco.
  * @param {number} index
  */
 export function getQuestion(index) {
-  return QUESTIONS[Math.min(index, QUESTIONS.length - 1)];
+  return QUESTIONS[index % QUESTIONS.length];
 }
 
 /**

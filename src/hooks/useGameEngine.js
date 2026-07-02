@@ -8,6 +8,7 @@ import {
   generateOptions,
   processChoice,
   calculateProfile,
+  calculateProgress,
   getQuestion,
 } from '../engine/adaptiveAlgorithm.js';
 
@@ -66,9 +67,9 @@ function gameReducer(state, action) {
 
       // Siguiente pregunta
       const nextOptions = generateOptions(newAlgo);
-      const prevPhase = getQuestion(state.algorithm.questionIndex).phase;
-      const nextPhase = getQuestion(newAlgo.questionIndex).phase;
-      const isTransitioning = prevPhase !== nextPhase;
+      const prevBg = getQuestion(state.algorithm.questionIndex).background;
+      const nextBg = getQuestion(newAlgo.questionIndex).background;
+      const isTransitioning = prevBg !== nextBg;
 
       return {
         ...state,
@@ -127,7 +128,7 @@ export function useGameEngine() {
     : null;
 
   const progress = state.algorithm
-    ? (state.algorithm.questionIndex / state.algorithm.totalQuestions) * 100
+    ? calculateProgress(state.algorithm.appearances)
     : 0;
 
   return {

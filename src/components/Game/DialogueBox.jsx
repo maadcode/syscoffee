@@ -6,18 +6,47 @@
 import { useEffect } from 'react';
 import { useDialogue } from '../../hooks/useDialogue.js';
 
-import charGerente from '../../assets/characters/char_gerente.png';
-import charBarista from '../../assets/characters/char_barista.png';
-import charDev     from '../../assets/characters/char_dev.png';
-import charPm      from '../../assets/characters/char_pm.png';
-import charTecnico from '../../assets/characters/char_tecnico.png';
+import charGerenteAngustiado from '../../assets/characters/char_gerente_angustiado.png';
+import charGerenteAlegre     from '../../assets/characters/char_gerente_alegre.png';
+import charBaristaAlegre     from '../../assets/characters/char_barista_alegre.png';
+import charBaristaPreocupada from '../../assets/characters/char_barista_preocupada.png';
+import charPedroNeutral      from '../../assets/characters/char_pedro_neutral.png';
+import charPedroAlegre       from '../../assets/characters/char_pedro_alegre.png';
+import charLuisSerio         from '../../assets/characters/char_luis_serio.png';
+import charLuisPreocupado    from '../../assets/characters/char_luis_preocupado.png';
+import charValeriaSeria      from '../../assets/characters/char_valeria_seria.png';
+import charValeriaAlegre     from '../../assets/characters/char_valeria_alegre.png';
+import charCarmenAlegre      from '../../assets/characters/char_carmen_alegre.png';
+import charLucasAlegre       from '../../assets/characters/char_lucas_alegre.png';
 
 const CHARACTER_MAP = {
-  gerente: charGerente,
-  barista: charBarista,
-  dev:     charDev,
-  pm:      charPm,
-  tecnico: charTecnico,
+  gerente: {
+    preocupado: charGerenteAngustiado,
+    angustiado: charGerenteAngustiado,
+    alegre:     charGerenteAlegre,
+  },
+  barista: {
+    alegre:     charBaristaAlegre,
+    preocupada: charBaristaPreocupada,
+  },
+  soporte_isp: {
+    neutral:    charPedroNeutral,
+    alegre:     charPedroAlegre,
+  },
+  contador: {
+    serio:      charLuisSerio,
+    preocupado: charLuisPreocupado,
+  },
+  soporte_cloud: {
+    seria:      charValeriaSeria,
+    alegre:     charValeriaAlegre,
+  },
+  cliente_carmen: {
+    alegre:     charCarmenAlegre,
+  },
+  cliente_lucas: {
+    alegre:     charLucasAlegre,
+  },
 };
 
 function injectName(text, playerName) {
@@ -49,7 +78,12 @@ export default function DialogueBox({ dialogue, playerName, onAdvance }) {
     return () => window.removeEventListener('keydown', handler);
   }, [isDone]);
 
-  const characterImg = CHARACTER_MAP[dialogue.character];
+  // Resolve portrait image dynamically based on character and mood
+  const charData = CHARACTER_MAP[dialogue.character];
+  const characterImg = charData
+    ? (charData[dialogue.mood] || Object.values(charData)[0])
+    : null;
+
   const isLeft = dialogue.side === 'left';
 
   // Desplazamiento dinámico del nombre según la posición del retrato
@@ -58,6 +92,43 @@ export default function DialogueBox({ dialogue, playerName, onAdvance }) {
     : '14px clamp(84px, 20vw, 112px) 0 18px';
 
   const nameAlign = isLeft ? 'left' : 'right';
+
+  // Calculate mood effects & badge
+  let moodFilter = 'none';
+  let moodBadge = null;
+  let borderGlow = 'none';
+  let badgeColor = 'rgba(0,0,0,0.8)';
+
+  switch (dialogue.mood) {
+    case 'alegre':
+      moodFilter = 'brightness(1.08) contrast(1.05) saturate(1.1)';
+      moodBadge = '✨';
+      borderGlow = '0 0 12px rgba(212, 148, 63, 0.6)';
+      badgeColor = '#d4943f';
+      break;
+    case 'preocupado':
+    case 'preocupada':
+    case 'angustiado':
+      moodFilter = 'brightness(0.92) contrast(0.98) saturate(0.85) hue-rotate(10deg)';
+      moodBadge = '💧';
+      borderGlow = '0 0 12px rgba(100, 160, 200, 0.5)';
+      badgeColor = '#7ec8e3';
+      break;
+    case 'serio':
+    case 'seria':
+      moodFilter = 'brightness(0.98) contrast(1.02)';
+      moodBadge = '📝';
+      borderGlow = 'none';
+      badgeColor = 'var(--color-cafe-400)';
+      break;
+    case 'neutral':
+    default:
+      moodFilter = 'none';
+      moodBadge = '💬';
+      borderGlow = 'none';
+      badgeColor = 'var(--color-cafe-500)';
+      break;
+  }
 
   return (
     <div
@@ -78,7 +149,7 @@ export default function DialogueBox({ dialogue, playerName, onAdvance }) {
             height: 'clamp(68px, 16vw, 92px)',
             top: 'clamp(-36px, -8vw, -28px)',
             [isLeft ? 'left' : 'right']: 'clamp(12px, 3vw, 24px)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(212, 148, 63, 0.2)',
+            boxShadow: `0 8px 24px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(212, 148, 63, 0.2), ${borderGlow}`,
             zIndex: 30,
           }}
         >
@@ -88,8 +159,28 @@ export default function DialogueBox({ dialogue, playerName, onAdvance }) {
             className="w-full h-full object-cover"
             style={{
               objectPosition: 'center 10%', // Asegura enfocar el rostro
+              filter: moodFilter,
+              transition: 'filter 0.3s ease',
             }}
           />
+          {moodBadge && (
+            <div
+              className="absolute flex items-center justify-center rounded-full text-xs font-bold border"
+              style={{
+                width: '20px',
+                height: '20px',
+                bottom: '2px',
+                right: '2px',
+                backgroundColor: 'rgba(15, 8, 2, 0.95)',
+                borderColor: badgeColor,
+                boxShadow: '0 2px 5px rgba(0,0,0,0.5)',
+                zIndex: 31,
+                fontSize: '0.65rem',
+              }}
+            >
+              {moodBadge}
+            </div>
+          )}
         </div>
       )}
 
